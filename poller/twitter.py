@@ -55,13 +55,14 @@ class Twitter(object):
         """
         https://dev.twitter.com/rest/reference/get/users/show
         http://docs.tweepy.org/en/latest/api.html#API.get_user
-        Parameters: id|user_id|screen_name
+        Params: id|user_id|screen_name
         """
         return self.api.get_user(**kwargs)
 
     def lookup_users(self, **kwargs):
         """
         https://dev.twitter.com/rest/reference/get/users/lookup
+        Params: user_ids|screen_names
         """
         param = ('user_ids' in kwargs and 'user_ids') or \
                 ('screen_names' in kwargs and 'screen_names')

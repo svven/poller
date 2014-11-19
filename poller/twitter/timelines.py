@@ -1,7 +1,7 @@
 """
 Polling Twitter timelines.
 """
-from .. import db
+from . import db
 from models import User, Token, Timeline
 
 

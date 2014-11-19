@@ -1,7 +1,7 @@
 """
 Models describing Twitter entities to be stored.
 """
-from .. import db
+from . import db
 
 
 class Tweeter(db.Model):
@@ -23,6 +23,16 @@ class Tweeter(db.Model):
     tweets = db.relationship('Tweet', backref='tweeter', lazy='dynamic')
     timeline = db.relationship('Timeline', backref='tweeter', uselist=False)
     token = db.relationship('Token', backref='tweeter', uselist=False)
+
+    def __init__(self, user):
+        "Param `user` is a Twitter API user."
+        self.tweeter_id = user.id
+        self.screen_name = user.screen_name
+        self.name = user.name
+        self.description = user.description
+        self.profile_image_url = user.profile_image_url
+        self.friends_count = user.friends_count
+        self.followers_count = user.followers_count
 
     def __repr__(self):
         return '<Tweeter (%s): @%s>' % (self.tweeter_id, self.screen_name)

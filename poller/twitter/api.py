@@ -1,21 +1,18 @@
 """
-Tweepy wrapper using RateLimitHandler with multiple access tokens,
-based on this fork https://github.com/svven/tweepy.
+Tweepy wrapper using RateLimitHandler with multiple 
+access tokens, based on this fork https://github.com/svven/tweepy.
 It also handles API method cursors and splits input param lists in 
 chunks if neccessary.
 """
-from tweepy import API, Cursor
-from tweepy import RateLimitHandler
+from tweepy import API, Cursor, RateLimitHandler
 from tweepy.error import TweepError
-
-from ..config import TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET
 
 
 class Twitter(object):
     "Tweepy wrapper class."
 
-    def __init__(self, consumer_key=TWITTER_CONSUMER_KEY, 
-        consumer_secret=TWITTER_CONSUMER_SECRET, access_tokens=None):
+    def __init__(self, 
+        consumer_key, consumer_secret, access_tokens=None):
         """
         Initialize params for RateLimitHandler to pass to Tweepy API.
         Param `access_tokens` must be a dictionary but it can be loaded
@@ -126,3 +123,4 @@ class Twitter(object):
           self.api.update_status(status)
       finally:
           self.api.auth.fixed_access_token = None
+

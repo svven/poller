@@ -4,20 +4,18 @@ based on this fork https://github.com/svven/tweepy.
 It also handles API method cursors and splits input param lists in 
 chunks if neccessary.
 """
-
 from tweepy import API, Cursor
 from tweepy import RateLimitHandler
 from tweepy.error import TweepError
 
-from config import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKENS
+from ..config import TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET
 
 
 class Twitter(object):
     "Tweepy wrapper class."
 
-    def __init__(self, 
-        consumer_key=CONSUMER_KEY, consumer_secret=CONSUMER_SECRET, 
-        access_tokens=ACCESS_TOKENS):
+    def __init__(self, consumer_key=TWITTER_CONSUMER_KEY, 
+        consumer_secret=TWITTER_CONSUMER_SECRET, access_tokens=None):
         """
         Initialize params for RateLimitHandler to pass to Tweepy API.
         Param `access_tokens` must be a dictionary but it can be loaded

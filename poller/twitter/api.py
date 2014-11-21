@@ -1,6 +1,6 @@
 """
-Tweepy wrapper using RateLimitHandler with multiple 
-access tokens, based on this fork https://github.com/svven/tweepy.
+Twitter API wrapper based on Tweepy using the RateLimitHandler 
+with multiple access tokens (see https://github.com/svven/tweepy).
 It also handles API method cursors and splits input param lists in 
 chunks if neccessary.
 """
@@ -9,7 +9,7 @@ from tweepy.error import TweepError
 
 
 class Twitter(object):
-    "Tweepy wrapper class."
+    "Twitter API wrapper."
 
     def __init__(self, 
         consumer_key, consumer_secret, access_tokens=None):
@@ -17,7 +17,7 @@ class Twitter(object):
         Initialize params for RateLimitHandler to pass to Tweepy API.
         Param `access_tokens` must be a dictionary but it can be loaded
         later just before the first API method call, and has to be like
-        { user_id: (access_token_key, access_token_secret) }.
+        {user_id: (access_token_key, access_token_secret)}.
         """
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
@@ -34,7 +34,7 @@ class Twitter(object):
             except Exception, e:
                 print key, e
         print 'Token pool size: %d' % len(auth.tokens)
-        return API(auth, retry_count=2, retry_delay=3,
+        return API(auth, # retry_count=2, retry_delay=3,
             wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
     @property
@@ -73,16 +73,16 @@ class Twitter(object):
             chunk = self.api.lookup_users(**dict([(param, items_chunk)]))
             for u in chunk: yield u
 
-    def user_timeline(self, user_id, since_id=None, max_id=None):
+    def user_timeline(self, user_id, since_id=None, count=None):
         """
         https://dev.twitter.com/rest/reference/get/statuses/user_timeline
         http://docs.tweepy.org/en/latest/api.html#API.user_timeline
         """
         for s in Cursor(self.api.user_timeline, 
-            user_id=user_id, since_id=since_id, max_id=max_id).items():
+            user_id=user_id, since_id=since_id).items(count):
             yield s
 
-    def home_timeline(self, user_id, since_id=None, max_id=None):
+    def home_timeline(self, user_id, since_id=None, count=None):
         """
         https://dev.twitter.com/rest/reference/get/statuses/home_timeline
         http://docs.tweepy.org/en/latest/api.html#API.home_timeline
@@ -91,7 +91,7 @@ class Twitter(object):
         self.api.auth.fixed_access_token = key
         try:
             for s in Cursor(self.api.home_timeline, 
-                since_id=since_id, max_id=max_id).items():
+                since_id=since_id).items(count):
                 yield s
         finally:
             self.api.auth.fixed_access_token = None

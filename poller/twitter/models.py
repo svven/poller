@@ -1,13 +1,12 @@
 """
-Models describing Twitter entities to be stored.
+Twitter models used by the poller.
 """
 from . import db
 
 
 class Tweeter(db.Model):
-    """
-    Twitter user that is tweeting links.
-    """
+    "Twitter user that is tweeting links."
+
     __tablename__ = 'twitter_tweeters'
 
     id = db.Column(db.BigInteger, primary_key=True)
@@ -39,9 +38,8 @@ class Tweeter(db.Model):
 
 
 class Token(db.Model):
-    """
-    Twitter API access token for user.
-    """
+    "Twitter API access token for user."
+
     __tablename__ = 'twitter_tokens'
 
     id = db.Column(db.BigInteger, primary_key=True)
@@ -55,44 +53,52 @@ class Token(db.Model):
 
 
 class Timeline(db.Model):
-    """
-    Twitter timeline that is being polled.
-    """
+    "Twitter timeline that is being polled."
+
     __tablename__ = 'twitter_timelines'
 
     METHODS = (USER_TIMELINE, HOME_TIMELINE) = ('user', 'home')
+    DEFAULT_FREQUENCY = 15 * 60 # 15 mins
+    MIN_FREQUENCY = 2 * 60 # 2 mins
+    MAX_FREQUENCY = 2 * 24 * 3600 # 2 days
+    MAX_FAILURES = 5 # to keep enabled
 
     id = db.Column(db.BigInteger, primary_key=True)
     tweeter_id = db.Column(db.BigInteger, 
         db.ForeignKey('twitter_tweeters.tweeter_id'), nullable=False, unique=True)
     method = db.Column(db.Enum(*METHODS, name='timeline_method'), nullable=False)
     since_id = db.Column(db.BigInteger)
-    next_check = db.Column(db.DateTime(timezone=True))
-    prev_check = db.Column(db.DateTime(timezone=True))
-    frequency = db.Column(db.Integer)
-    failures = db.Column(db.SmallInteger)
-    active = db.Column(db.Boolean)
+    next_check = db.Column(db.DateTime, default=db.func.now())
+    prev_check = db.Column(db.DateTime)
+    frequency = db.Column(db.Integer, nullable=False, default=DEFAULT_FREQUENCY)
+    failures = db.Column(db.SmallInteger, nullable=False, default=0)
+    enabled = db.Column(db.Boolean, nullable=False, default=True)
 
     def __repr__(self):
-        return '<Timeline (%s): %s>' % (self.tweeter_id, self.method)
+        return '<Timeline (%s): %s>' % (self.tweeter_id, self.method.upper())
 
 
 class Tweet(db.Model):
-    """
-    Twitter status containing a link by tweeter.
-    """
+    "Twitter status containing a link by tweeter."
+
     __tablename__ = 'twitter_tweets'
 
     id = db.Column(db.BigInteger, primary_key=True)
+    status_id = db.Column(db.BigInteger, nullable=False, unique=True)
     tweeter_id = db.Column(db.BigInteger, 
         db.ForeignKey('twitter_tweeters.tweeter_id'), nullable=False)
     source_url = db.Column(db.String, nullable=False)
-    status_id = db.Column(db.BigInteger)
-    created_at = db.Column(db.DateTime(timezone=True))
+    created_at = db.Column(db.DateTime, nullable=False)
     link_id = db.Column(db.String)
-    clean_url = db.Column(db.String)
-    valid = db.Column(db.Boolean)
+        # db.ForeignKey('reader_links.link_id')
+    processed = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __init__(self, status):
+        "Param `status` is a Twitter API status."
+        self.status_id = status.id
+        self.tweeter_id = status.user.id
+        self.created_at = status.created_at
 
     def __repr__(self):
-        return '<Tweet (%s): %s>' % (self.tweeter_id, self.source_url)
+        return '<Tweet (%s): %s>' % (self.status_id, self.source_url)
 

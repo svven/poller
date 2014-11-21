@@ -30,6 +30,7 @@ class Tweeter(db.Model):
         self.name = user.name
         self.description = user.description
         self.profile_image_url = user.profile_image_url
+        self.protected = user.protected
         self.friends_count = user.friends_count
         self.followers_count = user.followers_count
 
@@ -60,7 +61,7 @@ class Timeline(db.Model):
     METHODS = (USER_TIMELINE, HOME_TIMELINE) = ('user', 'home')
     DEFAULT_FREQUENCY = 15 * 60 # 15 mins
     MIN_FREQUENCY = 2 * 60 # 2 mins
-    MAX_FREQUENCY = 2 * 24 * 3600 # 2 days
+    MAX_FREQUENCY = 24 * 3600 # 1 day
     MAX_FAILURES = 5 # to keep enabled
 
     id = db.Column(db.BigInteger, primary_key=True)

@@ -77,6 +77,7 @@ class TimelineJob(object):
                 timeline.next_check = now + \
                     datetime.timedelta(seconds=Timeline.DEFAULT_FREQUENCY) # next_check
         else: # success
+            timeline.failures = 0 # reset failures
             if tweets_count > 0:
                 last_tweet = max(self.tweets, key=attrgetter('status_id'))
                 timeline.since_id = last_tweet.status_id # since_id

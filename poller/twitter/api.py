@@ -79,7 +79,7 @@ class Twitter(object):
         http://docs.tweepy.org/en/latest/api.html#API.user_timeline
         """
         for s in Cursor(self.api.user_timeline, 
-            user_id=user_id, since_id=since_id).items(count):
+            user_id=user_id, since_id=since_id, count=200).items(count):
             yield s
 
     def home_timeline(self, user_id, since_id=None, count=None):
@@ -91,7 +91,7 @@ class Twitter(object):
         self.api.auth.fixed_access_token = key
         try:
             for s in Cursor(self.api.home_timeline, 
-                since_id=since_id).items(count):
+                since_id=since_id, count=200).items(count):
                 yield s
         finally:
             self.api.auth.fixed_access_token = None

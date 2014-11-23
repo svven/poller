@@ -1,13 +1,12 @@
 """
-Poller Twitter jobs.
-E.g.: UserTimelineJob, HomeTimelineJob
+Poller Twitter job.
 """
 from . import db
 from models import Tweeter, Token, Timeline, Tweet
 
 from ..config import \
     TWITTER_CONSUMER_KEY as consumer_key, TWITTER_CONSUMER_SECRET as consumer_secret
-from api import Twitter
+from api import Twitter, TweepError
 
 import datetime
 from operator import attrgetter
@@ -33,7 +32,7 @@ class TimelineJob(object):
         self.ended_at = None
 
         self.tweets = [] # return
-        self.report = {
+        self.results = {
             NEW_TWEET: 0, EXISTING_TWEET: 0, PLAIN_TWEET: 0
         }
 
@@ -47,14 +46,14 @@ class TimelineJob(object):
         return urls and len(urls) and urls[0].get('expanded_url') or None
 
     def iter_timeline(self, session):
-        "Iterate the Twitter timeline."
+        "Iterator of the Twitter timeline."
         user_id, since_id = (
             self.timeline.tweeter_id, self.timeline.since_id)
         if self.timeline.method == Timeline.USER_TIMELINE:
             count = since_id or 300
             method = self.twitter.user_timeline
         else: # self.timeline.method == Timeline.HOME_TIMELINE:
-            count = since_id or 150
+            count = since_id or 300 # 150
             method = self.twitter.home_timeline
         return method(
             user_id=user_id, since_id=since_id, count=count)
@@ -75,10 +74,10 @@ class TimelineJob(object):
                 timeline.next_check = None # next_check
             else:
                 timeline.next_check = now + \
-                    datetime.timedelta(seconds=Timeline.DEFAULT_FREQUENCY) # next_check
+                    datetime.timedelta(seconds=timeline.frequency) # next_check
         else: # success
-            timeline.failures = 0 # reset failures
             if tweets_count > 0:
+                timeline.failures = 0 # reset failures
                 last_tweet = max(self.tweets, key=attrgetter('status_id'))
                 timeline.since_id = last_tweet.status_id # since_id
             if tweets_count > 2:
@@ -94,7 +93,7 @@ class TimelineJob(object):
         "Load tweet from status if possible."
         url = self.get_url(status)
         if not url: # plain tweet
-            self.report[PLAIN_TWEET] += 1
+            self.results[PLAIN_TWEET] += 1
             return
         tweeter = session.query(Tweeter).filter_by(tweeter_id=status.user.id).first()
         if not tweeter:
@@ -105,9 +104,9 @@ class TimelineJob(object):
             tweet = Tweet(status)
             tweet.source_url = url
             session.add(tweet)
-            self.report[NEW_TWEET] += 1
+            self.results[NEW_TWEET] += 1
         else: # existing tweet
-            self.report[EXISTING_TWEET] += 1
+            self.results[EXISTING_TWEET] += 1
         print tweet
         self.tweets.append(tweet)
 
@@ -116,19 +115,30 @@ class TimelineJob(object):
         Iterate the timeline and load relevant tweets.
         Calculate and update timeline stats when done.
         """
+        assert self.timeline.enabled
         self.started_at = datetime.datetime.utcnow()
         session = db.Session()
         try:
             for status in self.iter_timeline(session):
                 self.load_tweet(session, status)
-            session.commit()
+        except TweepError, e:
+            if  e.response and (
+                e.response.status_code < 400 or e.response.status_code >= 500):
+                print e
+                pass # no problem
+            else:
+                self.failed = True
         except Exception, e:
-            self.failed = True
             session.rollback()
+            session.close()
+            raise e # unknown problem
         try:
             self.update_timeline(session)
             session.commit()
+        except Exception, e:
+            session.rollback()
+            raise e # probably db problem
         finally:
             session.close()
-        self.ended_at = datetime.datetime.now()
+        self.ended_at = datetime.datetime.utcnow()
 

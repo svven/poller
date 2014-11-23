@@ -1,11 +1,10 @@
 """
-Initialize the poller app.
+Poller initialization.
 """
-import config
+import config, db
 
 from redis import Redis
 
-# Set redis instance
 r = Redis(config.REDIS_HOST, config.REDIS_PORT)
 
 # from flask import Flask
@@ -19,6 +18,6 @@ r = Redis(config.REDIS_HOST, config.REDIS_PORT)
 # db = SQLAlchemy(app)
 # db.create_all()
 
-def run():
-	"Run the poller app."
-	pass
+# def run():
+# 	"Run the poller app."
+# 	pass

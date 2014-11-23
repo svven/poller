@@ -34,8 +34,9 @@ class Twitter(object):
             except Exception, e:
                 print key, e
         print 'Token pool size: %d' % len(auth.tokens)
-        return API(auth, # retry_count=2, retry_delay=3,
-            wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+        return API(auth)
+            # retry_count=2, retry_delay=3,
+            # wait_on_rate_limit=True, wait_on_rate_limit_notify=True
 
     @property
     def api(self):

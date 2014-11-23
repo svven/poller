@@ -2,7 +2,7 @@
 SQLAlchemy module for mapper configuration.
 Similar to SQLAlchemy class from flask.ext.sqlalchemy.
 """
-import config
+from . import config
 config_dict = config.__dict__
 
 from sqlalchemy import create_engine, engine_from_config, func, ForeignKey, \

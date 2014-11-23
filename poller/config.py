@@ -13,7 +13,7 @@ REDIS_PORT = 6379
 # REDIS_DB = 0
 
 ## Queues
-QUEUES = (TWITTER_QUEUE, ) = ("poller:twitter", )
+QUEUES = (POLLER_QUEUE, ) = ("poller", )
 
 ## Twitter # @SvvenDotCom
 TWITTER_CONSUMER_KEY = 'Jrp1bcXiSahhWAqn3VJb4fzsg'

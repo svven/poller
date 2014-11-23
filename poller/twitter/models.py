@@ -62,7 +62,7 @@ class Timeline(db.Model):
     DEFAULT_FREQUENCY = 15 * 60 # 15 mins
     MIN_FREQUENCY = 2 * 60 # 2 mins
     MAX_FREQUENCY = 24 * 3600 # 1 day
-    MAX_FAILURES = 5 # to keep enabled
+    MAX_FAILURES = 3 # to keep enabled
 
     id = db.Column(db.BigInteger, primary_key=True)
     tweeter_id = db.Column(db.BigInteger, 

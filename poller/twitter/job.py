@@ -2,11 +2,10 @@
 Poller Twitter job.
 """
 from . import db
-from models import Tweeter, Token, Timeline, Tweet
-
 from ..config import \
     TWITTER_CONSUMER_KEY as consumer_key, TWITTER_CONSUMER_SECRET as consumer_secret
 from api import Twitter, TweepError
+from models import Tweeter, Token, Timeline, Tweet
 
 import datetime
 from operator import attrgetter
@@ -57,7 +56,7 @@ class TimelineJob(object):
             method = self.twitter.home_timeline
         return method(
             user_id=user_id, since_id=since_id, count=count)
-
+ 
     def update_timeline(self, session):
         "Update timeline stats after doing the job."
         now = datetime.datetime.utcnow()

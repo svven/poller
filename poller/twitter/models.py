@@ -76,7 +76,7 @@ class Timeline(db.Model):
     enabled = db.Column(db.Boolean, nullable=False, default=True)
 
     def __repr__(self):
-        return '<Timeline (%s): %s>' % (self.tweeter_id, self.method.upper())
+        return '<Timeline (%s): @%s>' % (self.method.upper(), self.tweeter.screen_name)
 
 
 class Tweet(db.Model):

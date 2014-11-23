@@ -58,7 +58,7 @@ class Timeline(db.Model):
 
     __tablename__ = 'twitter_timelines'
 
-    METHODS = (USER_TIMELINE, HOME_TIMELINE) = ('user', 'home')
+    # METHODS = (USER_TIMELINE, HOME_TIMELINE) = ('user', 'home')
     DEFAULT_FREQUENCY = 15 * 60 # 15 mins
     MIN_FREQUENCY = 2 * 60 # 2 mins
     MAX_FREQUENCY = 24 * 3600 # 1 day
@@ -67,7 +67,7 @@ class Timeline(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     tweeter_id = db.Column(db.BigInteger, 
         db.ForeignKey('twitter_tweeters.tweeter_id'), nullable=False, unique=True)
-    method = db.Column(db.Enum(*METHODS, name='timeline_method'), nullable=False)
+    # method = db.Column(db.Enum(*METHODS, name='timeline_method'), nullable=False)
     since_id = db.Column(db.BigInteger)
     next_check = db.Column(db.DateTime, default=db.func.now())
     prev_check = db.Column(db.DateTime)
@@ -76,7 +76,7 @@ class Timeline(db.Model):
     enabled = db.Column(db.Boolean, nullable=False, default=True)
 
     def __repr__(self):
-        return '<Timeline (%s): @%s>' % (self.method.upper(), self.tweeter.screen_name)
+        return '<Timeline (%s): @%s>' % (self.tweeter_id, self.tweeter.screen_name)
 
 
 class Tweet(db.Model):
@@ -91,7 +91,7 @@ class Tweet(db.Model):
     source_url = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
     link_id = db.Column(db.String)
-        # db.ForeignKey('reader_links.link_id')
+        # db.ForeignKey('news_links.link_id')
     processed = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(self, status):

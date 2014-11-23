@@ -19,9 +19,7 @@ class TimelineJob(object):
     def __init__(self, timeline, tokens):
         "Initialize the timeline model."
         assert timeline and tokens
-        assert timeline.method == Timeline.HOME_TIMELINE and \
-            timeline.tweeter_id in [t.tweeter_id for t in tokens] or \
-            timeline.method == Timeline.USER_TIMELINE
+        assert timeline.tweeter_id in [t.tweeter_id for t in tokens]
 
         self.timeline = timeline
         self.tokens = tokens
@@ -44,19 +42,6 @@ class TimelineJob(object):
         urls = hasattr(status, 'entities') and status.entities.get('urls')
         return urls and len(urls) and urls[0].get('expanded_url') or None
 
-    def iter_timeline(self, session):
-        "Iterator of the Twitter timeline."
-        user_id, since_id = (
-            self.timeline.tweeter_id, self.timeline.since_id)
-        if self.timeline.method == Timeline.USER_TIMELINE:
-            count = since_id or 300
-            method = self.twitter.user_timeline
-        else: # self.timeline.method == Timeline.HOME_TIMELINE:
-            count = since_id or 300 # 150
-            method = self.twitter.home_timeline
-        return method(
-            user_id=user_id, since_id=since_id, count=count)
- 
     def update_timeline(self, session):
         "Update timeline stats after doing the job."
         now = datetime.datetime.utcnow()
@@ -118,7 +103,11 @@ class TimelineJob(object):
         self.started_at = datetime.datetime.utcnow()
         session = db.Session()
         try:
-            for status in self.iter_timeline(session):
+            user_id, since_id = (
+                self.timeline.tweeter_id, self.timeline.since_id)
+            count = since_id or 300
+            for status in self.twitter.home_timeline(
+                user_id=user_id, since_id=since_id, count=count): # home_timeline
                 self.load_tweet(session, status)
         except TweepError, e:
             if  e.response and (

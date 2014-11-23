@@ -23,10 +23,6 @@ def poll_timeline(tweeter_id):
         raise e
     finally:
         s.close()
-    # if timeline.method == Timeline.HOME_TIMELINE:
-    #     # do the above
-    # else: # timeline.method == Timeline.USER_TIMELINE:
-    #     return # give up home_timelines
 
 def poll_timelines():
     "Poll available timeline jobs."

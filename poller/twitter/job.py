@@ -18,8 +18,9 @@ class TimelineJob(object):
 
     def __init__(self, timeline, tokens):
         "Initialize the timeline model."
-        assert timeline and tokens
-        assert timeline.tweeter_id in [t.tweeter_id for t in tokens]
+        assert timeline and tokens and \
+            timeline.tweeter_id in [t.tweeter_id for t in tokens], \
+            'Bad or missing TimelineJob args.'
 
         self.timeline = timeline
         self.tokens = tokens
@@ -29,7 +30,7 @@ class TimelineJob(object):
         self.ended_at = None
 
         self.tweets = [] # return
-        self.results = {
+        self.result = {
             NEW_TWEET: 0, EXISTING_TWEET: 0, PLAIN_TWEET: 0
         }
 
@@ -77,7 +78,7 @@ class TimelineJob(object):
         "Load tweet from status if possible."
         url = self.get_url(status)
         if not url: # plain tweet
-            self.results[PLAIN_TWEET] += 1
+            self.result[PLAIN_TWEET] += 1
             return
         tweeter = session.query(Tweeter).filter_by(tweeter_id=status.user.id).first()
         if not tweeter:
@@ -88,10 +89,10 @@ class TimelineJob(object):
             tweet = Tweet(status)
             tweet.source_url = url
             session.add(tweet)
-            self.results[NEW_TWEET] += 1
+            self.result[NEW_TWEET] += 1
         else: # existing tweet
-            self.results[EXISTING_TWEET] += 1
-        print tweet
+            self.result[EXISTING_TWEET] += 1
+        print unicode(tweet).encode('utf8')
         self.tweets.append(tweet)
 
     def do(self):
@@ -99,28 +100,24 @@ class TimelineJob(object):
         Iterate the timeline and load relevant tweets.
         Calculate and update timeline stats when done.
         """
-        assert self.timeline.enabled
+        assert self.timeline.enabled, 'Timeline disabled, can\'t do the job.'
         self.started_at = datetime.datetime.utcnow()
         session = db.Session()
         try:
             user_id, since_id = (
                 self.timeline.tweeter_id, self.timeline.since_id)
             count = since_id or 300
-            for status in self.twitter.home_timeline(
-                user_id=user_id, since_id=since_id, count=count): # home_timeline
-                self.load_tweet(session, status)
-        except TweepError, e:
-            if  e.response and (
-                e.response.status_code < 400 or e.response.status_code >= 500):
-                print e
-                pass # no problem
-            else:
-                self.failed = True
-        except Exception, e:
-            session.rollback()
-            session.close()
-            raise e # unknown problem
-        try:
+            try:
+                for status in self.twitter.home_timeline(
+                    user_id=user_id, since_id=since_id, count=count): # home_timeline
+                    self.load_tweet(session, status)
+            except TweepError, e:
+                if  e.response and (
+                    e.response.status_code < 400 or e.response.status_code >= 500):
+                    print e # warning
+                    pass # no problem
+                else:
+                    self.failed = True
             self.update_timeline(session)
             session.commit()
         except Exception, e:

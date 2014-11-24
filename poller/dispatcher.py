@@ -8,21 +8,16 @@ from twitter.job import TimelineJob
 
 import time, datetime, random
 from rq import Connection, Queue
-from rq.job import Status
 
 
 def poll_timeline(tweeter_id):
     "Poll provided timeline job."
     s = db.Session()
-    try:
-        tweeter = s.query(Tweeter).filter_by(tweeter_id=tweeter_id).one()
-        job = TimelineJob(tweeter.timeline, [tweeter.token]) # user_timeline
-        job.do()
-        return job.results
-    except Exception, e:
-        raise e
-    finally:
-        s.close()
+    tweeter = s.query(Tweeter).filter_by(tweeter_id=tweeter_id).one()
+    job = TimelineJob(tweeter.timeline, [tweeter.token]) # user_timeline
+    job.do()
+    s.close()
+    return job.result
 
 def poll_timelines():
     "Poll available timeline jobs."
@@ -35,13 +30,10 @@ def poll_timelines():
         q = Queue(QUEUE)
         for timeline in timelines:
             tweeter_id = timeline.tweeter_id
-            job = q.fetch_job(unicode(tweeter_id))
-            if job is None or job.get_status() == Status.FINISHED:
-                job = q.enqueue_call(
-                    func=poll_timeline, args=(tweeter_id,), 
-                    job_id=unicode(tweeter_id), description=timeline)
-            print '%s %s: %s' % (
-                time.strftime('%X'), job.get_status().capitalize(), job)
+            job = q.enqueue_call(func=poll_timeline, args=(tweeter_id,), 
+                description=timeline) # job_id=unicode(tweeter_id), result_ttl=0
+            print '%s %s: %s' % (time.strftime('%X'), 
+                job.get_status().capitalize(), job.description)
     s.close()
 
 def dispatch():

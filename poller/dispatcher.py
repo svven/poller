@@ -13,19 +13,24 @@ from rq import Connection, Queue
 def poll_timeline(tweeter_id):
     "Poll provided timeline job."
     s = db.Session()
-    tweeter = s.query(Tweeter).filter_by(tweeter_id=tweeter_id).one()
-    job = TimelineJob(tweeter.timeline, [tweeter.token]) # user_timeline
-    job.do()
-    s.close()
-    return job.result
+    try:
+        tweeter = s.query(Tweeter).filter_by(tweeter_id=tweeter_id).one()
+        job = TimelineJob(tweeter.timeline, [tweeter.token]) # user_timeline
+        job.do()
+        return job.result
+    finally:
+        s.close()
 
 def poll_timelines():
     "Poll available timeline jobs."
-    s = db.Session()
     now = datetime.datetime.utcnow()
-    timelines = s.query(Timeline).\
-        filter(Timeline.enabled == True, Timeline.next_check < now).\
-        order_by(Timeline.next_check)
+    s = db.Session()
+    try:
+        timelines = s.query(Timeline).\
+            filter(Timeline.enabled == True, Timeline.next_check < now).\
+            order_by(Timeline.next_check)
+    finally:
+        s.close()
     with Connection(r):
         q = Queue(QUEUE)
         for timeline in timelines:
@@ -34,7 +39,6 @@ def poll_timelines():
                 description=timeline) # job_id=unicode(tweeter_id), result_ttl=0
             print '%s %s: %s' % (time.strftime('%X'), 
                 job.get_status().capitalize(), job.description)
-    s.close()
 
 def dispatch():
     "Polling timelines periodically."

@@ -10,8 +10,7 @@ from models import Tweeter, Token, Timeline, Tweet
 import datetime
 from operator import attrgetter
 
-NEW_TWEET, EXISTING_TWEET, PLAIN_TWEET, SKIPPED_TWEET = (
-    'new', 'existing', 'plain', 'skipped')
+NEW_TWEET, EXISTING_TWEET, PLAIN_TWEET = ('new', 'existing', 'plain')
 
 
 class TimelineJob(object):
@@ -32,7 +31,7 @@ class TimelineJob(object):
 
         self.tweets = [] # return
         self.result = {
-            NEW_TWEET: 0, EXISTING_TWEET: 0, PLAIN_TWEET: 0, SKIPPED_TWEET: 0
+            NEW_TWEET: 0, EXISTING_TWEET: 0, PLAIN_TWEET: 0
         }
 
         access_tokens = \
@@ -46,13 +45,12 @@ class TimelineJob(object):
 
     def update_timeline(self, session):
         "Update timeline stats after doing the job."
-        s = session
         now = datetime.datetime.utcnow()
         timefreq = lambda timedelta, count: \
             int(timedelta.total_seconds() / (count - 1))
 
-        timeline = s.merge(self.timeline)
         tweets_count = len(self.tweets)
+        timeline = session.merge(self.timeline) # just in case
         timeline.prev_check = now # prev_check
         if self.failed:
             timeline.failures += 1 # failures
@@ -78,34 +76,32 @@ class TimelineJob(object):
 
     def load_tweet(self, session, status):
         "Load tweet from status if possible."
-        s = session
         tweet = result = None
         url = self.get_url(status)
         if not url: # plain tweet
             result = PLAIN_TWEET
             return tweet, result
-        tweeter = s.query(Tweeter).filter_by(tweeter_id=status.user.id).first()
+        tweeter = session.query(Tweeter).filter_by(tweeter_id=status.user.id).first()
         if not tweeter:
             tweeter = Tweeter(status.user)
-            s.add(tweeter)
-        tweet = s.query(Tweet).filter_by(status_id=status.id).first()
+            session.add(tweeter)
+        tweet = session.query(Tweet).filter_by(status_id=status.id).first()
         if not tweet: # new tweet
             tweet = Tweet(status)
             tweet.source_url = url
-            s.add(tweet)
+            session.add(tweet)
             result = NEW_TWEET
         else: # existing tweet
             result = EXISTING_TWEET
         return tweet, result
 
-    def do(self):
+    def do(self, session):
         """
         Iterate the timeline and load relevant tweets.
         Calculate and update timeline stats when done.
         """
         assert self.timeline.enabled, 'Timeline disabled, can\'t do the job.'
         self.started_at = datetime.datetime.utcnow()
-        s = db.Session()
         try:
             user_id, since_id = (
                 self.timeline.tweeter_id, self.timeline.since_id)
@@ -113,34 +109,27 @@ class TimelineJob(object):
             for status in self.twitter.home_timeline(
                 user_id=user_id, since_id=since_id, count=count): # home_timeline
                 try:
-                    tweet, result = self.load_tweet(s, status)
-                    if s.new: # new
-                        s.commit()
+                    tweet, result = self.load_tweet(session, status)
+                    if session.new: # new
+                        session.commit()
                     self.result[result] += 1
-                    if tweet:
+                    if tweet: # new or existing
                         self.tweets.append(tweet)
-                    else: # plain
-                        continue
+                        print "%s: %s" % (
+                            result.capitalize(), unicode(tweet).encode('utf8'))
+                    # else: # plain
+                    #     continue
                 except IntegrityError: # existing
-                    s.rollback()
-                    result = SKIPPED_TWEET
-                    self.result[result] += 1
-                print "%s: %s" % (
-                    result.capitalize(), unicode(tweet).encode('utf8'))
+                    session.rollback()
+                    print "Skipped: %s" % unicode(tweet or status).encode('utf8')
         except TweepError, e:
             if  e.response and (
                 e.response.status_code < 400 or e.response.status_code >= 500):
                 print e # warning
-                pass # no problem
+                # pass # no problem
             else:
                 self.failed = True
-        try:
-            self.update_timeline(s)
-            s.commit()
-        except:
-            s.rollback()
-            raise # unexpected error
-        finally:
-            s.close()
+        self.update_timeline(session)
+        session.commit()
         self.ended_at = datetime.datetime.utcnow()
 

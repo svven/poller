@@ -12,25 +12,28 @@ from rq import Connection, Queue
 
 def poll_timeline(tweeter_id):
     "Poll provided timeline job."
-    s = db.Session()
+    session = db.Session()
     try:
-        tweeter = s.query(Tweeter).filter_by(tweeter_id=tweeter_id).one()
+        tweeter = session.query(Tweeter).filter_by(tweeter_id=tweeter_id).one()
         job = TimelineJob(tweeter.timeline, [tweeter.token]) # user_timeline
-        job.do()
+        job.do(session)
         return job.result
+    except:
+        session.rollback()
+        raise
     finally:
-        s.close()
+        session.close()
 
 def poll_timelines():
     "Poll available timeline jobs."
     now = datetime.datetime.utcnow()
-    s = db.Session()
+    session = db.Session()
     try:
-        timelines = s.query(Timeline).\
+        timelines = session.query(Timeline).\
             filter(Timeline.enabled == True, Timeline.next_check < now).\
             order_by(Timeline.next_check)
     finally:
-        s.close()
+        session.close()
     with Connection(r):
         q = Queue(QUEUE)
         for timeline in timelines:

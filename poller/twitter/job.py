@@ -39,7 +39,7 @@ class TimelineJob(object):
         self.twitter = Twitter(consumer_key, consumer_secret, access_tokens)
 
     def get_url(self, status):
-        "Get first url from status if any."
+        "Get first url from tweet if any."
         urls = hasattr(status, 'entities') and status.entities.get('urls')
         return urls and len(urls) and urls[0].get('expanded_url') or None
 
@@ -74,20 +74,20 @@ class TimelineJob(object):
             timeline.next_check = now + \
                 datetime.timedelta(seconds=timeline.frequency) # next_check
 
-    def load_status(self, session, status):
-        "Load status from status if possible."
+    def load_status(self, session, tweet):
+        "Load status from tweet if possible."
         status = result = None
-        url = self.get_url(status)
+        url = self.get_url(tweet)
         if not url: # plain status
             result = PLAIN_STATUS
             return status, result
-        user = session.query(User).filter_by(user_id=status.user.id).first()
+        user = session.query(User).filter_by(user_id=tweet.user.id).first()
         if not user:
-            user = User(status.user)
+            user = User(tweet.user)
             session.add(user)
-        status = session.query(Status).filter_by(status_id=status.id).first()
+        status = session.query(Status).filter_by(status_id=tweet.id).first()
         if not status: # new status
-            status = Status(status)
+            status = Status(tweet)
             status.url = url
             session.add(status)
             result = NEW_STATUS
@@ -106,10 +106,10 @@ class TimelineJob(object):
             user_id, since_id = (
                 self.timeline.user_id, self.timeline.since_id)
             count = since_id or 300
-            for status in self.twitter.home_timeline(
+            for tweet in self.twitter.home_timeline(
                 user_id=user_id, since_id=since_id, count=count): # home_timeline
                 try:
-                    status, result = self.load_status(session, status)
+                    status, result = self.load_status(session, tweet)
                     if session.new: # new
                         session.commit()
                     self.result[result] += 1

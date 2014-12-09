@@ -31,8 +31,12 @@ class Twitter(object):
         for key, secret in self.access_tokens.values():
             try:
                 auth.add_access_token(key, secret)
-            except Exception, e:
-                print key, e
+            except TweepError, e:
+                if e.response and e.response.status_code == 401:
+                    print key, e
+                    pass # no problem
+                else:
+                    raise e
         print 'Token pool size: %d' % len(auth.tokens)
         return API(auth)
             # retry_count=2, retry_delay=3,

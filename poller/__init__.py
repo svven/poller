@@ -1,10 +1,17 @@
 """
 Poller initialization.
 """
-import config, db
+import config
+
+import database
+db = database.db
+
+# TODO: Make this generic
+database.config.sqlalchemy_url = config.sqlalchemy_url
+database.config.SQLALCHEMY_DATABASE_URI = config.SQLALCHEMY_DATABASE_URI
+
 
 from redis import Redis
-
 r = Redis(config.REDIS_HOST, config.REDIS_PORT)
 
 # from flask import Flask
@@ -17,7 +24,3 @@ r = Redis(config.REDIS_HOST, config.REDIS_PORT)
 # # Set the database
 # db = SQLAlchemy(app)
 # db.create_all()
-
-# def run():
-# 	"Run the poller app."
-# 	pass

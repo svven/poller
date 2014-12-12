@@ -5,6 +5,7 @@ from . import db
 from ..config import \
     TWITTER_CONSUMER_KEY as consumer_key, TWITTER_CONSUMER_SECRET as consumer_secret
 from api import Twitter, TweepError
+from database.db import IntegrityError
 from database.twitter.models import User, Token, Timeline, Status
 
 import datetime

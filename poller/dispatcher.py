@@ -38,7 +38,7 @@ def poll_timelines():
         with Connection(r):
             q = Queue(QUEUE)
             for timeline in timelines:
-                if timeline.state == State.BUSY:
+                if timeline.state == State.BUSY: # warning
                     print '%s Skipped: %s' % (time.strftime('%X'), timeline)
                 else:
                     user_id = timeline.user_id
@@ -59,4 +59,3 @@ def dispatch():
         poll_timelines()
         print '%s Sleeping' % time.strftime('%X')
         time.sleep(Timeline.MIN_FREQUENCY)
-

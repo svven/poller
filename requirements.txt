@@ -11,8 +11,7 @@ psycopg2==2.5.4
 redis==2.10.3
 # requests==2.4.3
 # requests-oauthlib==0.4.0
-rq==0.4.6
-# git+git@github.com:nvie/rq.git@master#egg=rq
+rq==0.4.6 # git+git@github.com:nvie/rq.git@master#egg=rq
 git+ssh://git@bitbucket.org/svven/database.git@master#egg=svven-database
 git+https://github.com/svven/tweepy.git@master#egg=tweepy
 # wsgiref==0.1.2

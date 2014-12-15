@@ -11,7 +11,8 @@ from database.twitter.models import User, Token, Timeline, Status
 import datetime
 from operator import attrgetter
 
-NEW_STATUS, EXISTING_STATUS, PLAIN_STATUS = ('new', 'existing', 'plain')
+NEW_STATUS, EXISTING_STATUS, PLAIN_STATUS, IGNORED_STATUS = (
+    'new', 'existing', 'plain', 'ignored')
 
 
 class TimelineJob(object):
@@ -32,7 +33,7 @@ class TimelineJob(object):
 
         self.statuses = [] # return
         self.result = {
-            NEW_STATUS: 0, EXISTING_STATUS: 0, PLAIN_STATUS: 0
+            NEW_STATUS: 0, EXISTING_STATUS: 0, PLAIN_STATUS: 0, IGNORED_STATUS: 0
         }
 
         access_tokens = \
@@ -86,6 +87,9 @@ class TimelineJob(object):
         if not user:
             user = User(tweet.user)
             session.add(user)
+        elif user.ignored:
+            result = IGNORED_STATUS
+            return status, result
         status = session.query(Status).filter_by(status_id=tweet.id).first()
         if not status: # new status
             status = Status(tweet)
@@ -120,7 +124,7 @@ class TimelineJob(object):
                             result.capitalize(), unicode(status).encode('utf8'))
                     # else: # plain
                     #     continue
-                except IntegrityError: # existing
+                except IntegrityError: # probably existing
                     session.rollback()
                     print "Skipped: %s" % unicode(status or status).encode('utf8')
         except TweepError, e:

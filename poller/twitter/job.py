@@ -11,8 +11,8 @@ from database.twitter.models import User, Token, Timeline, Status
 import datetime
 from operator import attrgetter
 
-NEW_STATUS, EXISTING_STATUS, PLAIN_STATUS, IGNORED_STATUS = (
-    'new', 'existing', 'plain', 'ignored')
+NEW_STATUS, EXISTING_STATUS, PLAIN_STATUS, SKIPPED_STATUS = (
+    'new', 'existing', 'plain', 'skipped')
 
 
 class TimelineJob(object):
@@ -33,7 +33,7 @@ class TimelineJob(object):
 
         self.statuses = [] # return
         self.result = {
-            NEW_STATUS: 0, EXISTING_STATUS: 0, PLAIN_STATUS: 0, IGNORED_STATUS: 0
+            NEW_STATUS: 0, EXISTING_STATUS: 0, PLAIN_STATUS: 0, SKIPPED_STATUS: 0
         }
 
         access_tokens = \
@@ -88,7 +88,7 @@ class TimelineJob(object):
             user = User(tweet.user)
             session.add(user)
         elif user.ignored:
-            result = IGNORED_STATUS
+            result = SKIPPED_STATUS
             return status, result
         status = session.query(Status).filter_by(status_id=tweet.id).first()
         if not status: # new status
@@ -113,20 +113,20 @@ class TimelineJob(object):
             count = since_id or 300
             for tweet in self.twitter.home_timeline(
                 user_id=user_id, since_id=since_id, count=count): # home_timeline
+                status = result = None
                 try:
                     status, result = self.load_status(session, tweet)
                     if session.new: # new
-                        session.commit()
-                    self.result[result] += 1
-                    if status: # new or existing
-                        self.statuses.append(status)
-                        print "%s: %s" % (
-                            result.capitalize(), unicode(status).encode('utf8'))
-                    # else: # plain
-                    #     continue
-                except IntegrityError: # probably existing
+                        session.commit() # atomic
+                except IntegrityError: # existing
                     session.rollback()
-                    print "Skipped: %s" % unicode(status or status).encode('utf8')
+                    result = SKIPPED_STATUS
+                if status: # new or existing
+                    self.statuses.append(status)
+                self.result[result] += 1
+                print "%s: %s" % (result.capitalize(), 
+                    status and unicode(status).encode('utf8') or \
+                    "<Twitter Tweet (%s): %s...>" % (tweet.id, tweet.text[:30].encode('utf8')))
         except TweepError, e:
             if  e.response and (
                 e.response.status_code < 400 or e.response.status_code >= 500):

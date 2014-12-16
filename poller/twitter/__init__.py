@@ -1,5 +1,5 @@
 """
 Poller package for Twitter data.
 """
-from .. import db
+from .. import config, db, r
 

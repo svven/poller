@@ -1,9 +1,8 @@
 """
 Poller Twitter job.
 """
-from . import db
-from ..config import \
-    TWITTER_CONSUMER_KEY as consumer_key, TWITTER_CONSUMER_SECRET as consumer_secret
+from . import config, db
+
 from tweepy import Twitter, TweepError
 from database.db import IntegrityError
 from database.twitter.models import User, Token, Timeline, Status
@@ -13,7 +12,8 @@ from operator import attrgetter
 
 NEW_STATUS, EXISTING_STATUS, PLAIN_STATUS, SKIPPED_STATUS = (
     'new', 'existing', 'plain', 'skipped')
-
+CONSUMER_KEY, CONSUMER_SECRET = (
+    config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
 
 class TimelineJob(object):
     "Polling job for a Twitter timeline."
@@ -38,7 +38,7 @@ class TimelineJob(object):
 
         access_tokens = \
             {t.user_id: (t.key, t.secret) for t in tokens}
-        self.twitter = Twitter(consumer_key, consumer_secret, access_tokens)
+        self.twitter = Twitter(CONSUMER_KEY, CONSUMER_SECRET, access_tokens)
 
     def get_url(self, status):
         "Get first url from tweet if any."

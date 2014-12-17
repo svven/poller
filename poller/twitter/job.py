@@ -4,6 +4,7 @@ Poller Twitter job.
 from . import config, db
 
 from tweepy import Twitter, TweepError
+
 from database.db import IntegrityError
 from database.twitter.models import User, Token, Timeline, Status
 
@@ -14,6 +15,7 @@ NEW_STATUS, EXISTING_STATUS, PLAIN_STATUS, SKIPPED_STATUS = (
     'new', 'existing', 'plain', 'skipped')
 CONSUMER_KEY, CONSUMER_SECRET = (
     config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET)
+
 
 class TimelineJob(object):
     "Polling job for a Twitter timeline."
@@ -135,6 +137,6 @@ class TimelineJob(object):
             else:
                 self.failed = True
         self.update_timeline(session)
-        session.commit()
+        # session.commit() # outside
         self.ended_at = datetime.datetime.utcnow()
 

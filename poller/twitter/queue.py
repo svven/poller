@@ -18,9 +18,10 @@ def process(user_id):
     session = db.Session()
     try:
         user = session.query(User).filter_by(user_id=user_id).one()
+        # assert user.timeline.state == State.BUSY # not necessarily
         job = TimelineJob(user.timeline, [user.token]) # user_timeline
         job.do(session)
-        timeline = session.merge(user.timeline)
+        timeline = session.merge(user.timeline) # no need
         timeline.state = job.failed and State.FAIL or State.DONE
         session.commit()
         return job.result

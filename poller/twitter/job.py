@@ -132,11 +132,11 @@ class TimelineJob(object):
         except TweepError, e:
             if  e.response and (
                 e.response.status_code < 400 or e.response.status_code >= 500):
-                print e # warning
+                print repr(e), self.timeline.id # warning
                 # pass # no problem
             else:
                 self.failed = True
         self.update_timeline(session)
-        # session.commit() # outside
+        session.commit() # outside
         self.ended_at = datetime.datetime.utcnow()
 

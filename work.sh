@@ -7,7 +7,11 @@ echo 'Start worker'
 ## Can be run w/o an active virtualenv as it activates it here
 . env/bin/activate
 
-rqworker poller
+if [ $@ ]; then
+	rqworker $@
+else
+	rqworker -c poller.config
+fi
 
 echo 'End worker'
 

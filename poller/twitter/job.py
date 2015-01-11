@@ -52,31 +52,28 @@ class TimelineJob(object):
         now = datetime.datetime.utcnow()
         timefreq = lambda timedelta, count: \
             int(timedelta.total_seconds() / (count - 1))
-
-        statuses_count = len(self.statuses)
         timeline = session.merge(self.timeline) # just in case
+        
         timeline.prev_check = now # prev_check
+        statuses_count = len(self.statuses)
+        if statuses_count > 0:
+            last_status = max(self.statuses, key=attrgetter('status_id'))
+            timeline.since_id = last_status.status_id # since_id
+        if statuses_count > 2:
+            first_status = min(self.statuses, key=attrgetter('status_id'))
+            timedelta = last_status.created_at - first_status.created_at
+            freq = timefreq(timedelta, statuses_count)
+            timeline.frequency = max(min(freq, 
+                Timeline.MAX_FREQUENCY), Timeline.MIN_FREQUENCY) # frequency
         if self.failed:
             timeline.failures += 1 # failures
             if timeline.failures >= Timeline.MAX_FAILURES:
                 timeline.enabled = False # disabled
-                timeline.next_check = None # next_check
-            else:
-                timeline.next_check = now + \
-                    datetime.timedelta(seconds=timeline.frequency) # next_check
         else: # success
-            if statuses_count > 0:
-                timeline.failures = 0 # reset failures
-                last_status = max(self.statuses, key=attrgetter('status_id'))
-                timeline.since_id = last_status.status_id # since_id
-            if statuses_count > 2:
-                first_status = min(self.statuses, key=attrgetter('status_id'))
-                timedelta = last_status.created_at - first_status.created_at
-                freq = timefreq(timedelta, statuses_count)
-                timeline.frequency = max(min(freq, 
-                    Timeline.MAX_FREQUENCY), Timeline.MIN_FREQUENCY) # frequency
-            timeline.next_check = now + \
-                datetime.timedelta(seconds=timeline.frequency) # next_check
+            timeline.failures = 0 # reset failures
+            timeline.enabled = True # enabled
+        timeline.next_check = now + \
+            datetime.timedelta(seconds=timeline.frequency) # next_check
 
     def load_status(self, session, tweet):
         "Load status from tweet if possible."
@@ -107,7 +104,7 @@ class TimelineJob(object):
         Iterate the timeline and load relevant statuses.
         Calculate and update timeline stats when done.
         """
-        assert self.timeline.enabled, 'Timeline disabled, can\'t do the job.'
+        # assert self.timeline.enabled, 'Timeline disabled, can\'t do the job.'
         self.started_at = datetime.datetime.utcnow()
         try:
             user_id, since_id = (
@@ -132,10 +129,11 @@ class TimelineJob(object):
         except TweepError, e:
             if  e.response and (
                 e.response.status_code < 400 or e.response.status_code >= 500):
-                print repr(e), self.timeline.id # warning
-                # pass # no problem
+                pass # no problem
             else:
                 self.failed = True
+                if sum(self.result.values()) == 0:
+                    self.result = repr(e) # exception
         self.update_timeline(session)
         session.commit() # outside
         self.ended_at = datetime.datetime.utcnow()

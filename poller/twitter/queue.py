@@ -11,6 +11,7 @@ from rq import Connection, Queue
 
 QUEUE = config.POLLER_QUEUE
 FREQUENCY = Timeline.MIN_FREQUENCY
+RESULT_TTL = 1 * 60 # 1 min
 
 
 def process(user_id):
@@ -53,7 +54,7 @@ def enqueue(timelines=[]):
                 else:
                     user_id = timeline.user_id
                     job = q.enqueue_call(func=process, args=(user_id,), 
-                        description=timeline) # job_id=unicode(user_id), result_ttl=0
+                        description=timeline, result_ttl=RESULT_TTL) # job_id=unicode(user_id), result_ttl=0
                     timeline.state = State.BUSY
                     session.commit()
                     print '%s Queued: %s' % (time.strftime('%X'), timeline)

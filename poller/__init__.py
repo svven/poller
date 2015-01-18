@@ -12,4 +12,4 @@ database.config.SQLALCHEMY_DATABASE_URI = config.SQLALCHEMY_DATABASE_URI
 
 
 import redis
-r = redis.Redis(config.REDIS_HOST, config.REDIS_PORT)
+r = redis.StrictRedis(config.REDIS_HOST, config.REDIS_PORT)

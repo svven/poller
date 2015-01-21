@@ -33,7 +33,8 @@ class TimelineJob(object):
         self.started_at = None
         self.ended_at = None
 
-        self.statuses = [] # return
+        self.users = [] # new
+        self.statuses = [] # new or existing
         self.result = {
             NEW_STATUS: 0, EXISTING_STATUS: 0, PLAIN_STATUS: 0, SKIPPED_STATUS: 0
         }
@@ -74,6 +75,7 @@ class TimelineJob(object):
             timeline.enabled = True # enabled
         timeline.next_check = now + \
             datetime.timedelta(seconds=timeline.frequency) # next_check
+        session.commit() # stats matter
 
     def load_status(self, session, tweet):
         "Load status from tweet if possible."
@@ -83,9 +85,10 @@ class TimelineJob(object):
             result = PLAIN_STATUS
             return status, result
         user = session.query(User).filter_by(user_id=tweet.user.id).first()
-        if not user:
+        if not user: # new
             user = User(tweet.user)
             session.add(user)
+            self.users.append(user)
         elif user.ignored:
             result = SKIPPED_STATUS
             return status, result
@@ -99,6 +102,23 @@ class TimelineJob(object):
             result = EXISTING_STATUS
         return status, result
 
+    def save_status(self, session, tweet):
+        "Save status from tweet if needed."
+        status = result = None
+        try:
+            status, result = self.load_status(session, tweet)
+            if session.new: # new
+                session.commit() # atomic
+        except IntegrityError: # existing
+            session.rollback()
+            result = SKIPPED_STATUS
+        if status: # new or existing
+            self.statuses.append(status)
+        self.result[result] += 1
+        print "%s: %s" % (result.capitalize(), 
+            status and unicode(status).encode('utf8') or \
+            "<Twitter Tweet (%s): %s...>" % (tweet.id, tweet.text[:30].encode('utf8')))
+
     def do(self, session):
         """
         Iterate the timeline and load relevant statuses.
@@ -107,25 +127,15 @@ class TimelineJob(object):
         # assert self.timeline.enabled, 'Timeline disabled, can\'t do the job.'
         self.started_at = datetime.datetime.utcnow()
         try:
-            user_id, since_id = (
-                self.timeline.user_id, self.timeline.since_id)
-            count = since_id or 300
             for tweet in self.twitter.home_timeline(
-                user_id=user_id, since_id=since_id, count=count): # home_timeline
-                status = result = None
-                try:
-                    status, result = self.load_status(session, tweet)
-                    if session.new: # new
-                        session.commit() # atomic
-                except IntegrityError: # existing
-                    session.rollback()
-                    result = SKIPPED_STATUS
-                if status: # new or existing
-                    self.statuses.append(status)
-                self.result[result] += 1
-                print "%s: %s" % (result.capitalize(), 
-                    status and unicode(status).encode('utf8') or \
-                    "<Twitter Tweet (%s): %s...>" % (tweet.id, tweet.text[:30].encode('utf8')))
+                user_id=self.timeline.user_id, since_id=self.timeline.since_id, 
+                count=self.timeline.since_id is None and 300 or None): # home_timeline
+                self.save_status(session, tweet)
+            self.update_timeline(session) # for home_timeline
+            for user in set(self.users):
+                for tweet in self.twitter.user_timeline(
+                    user_id=user.user_id, count=100): # user_timeline
+                    self.save_status(session, tweet)
         except TweepError, e:
             if  e.response and (
                 e.response.status_code < 400 or e.response.status_code >= 500):
@@ -134,7 +144,6 @@ class TimelineJob(object):
                 self.failed = True
                 if sum(self.result.values()) == 0:
                     self.result = repr(e) # exception
-        self.update_timeline(session)
         session.commit() # outside
         self.ended_at = datetime.datetime.utcnow()
 

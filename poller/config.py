@@ -7,12 +7,10 @@ Config settings for poller app.
 # SQLALCHEMY_ECHO = sqlalchemy_echo = True
 SQLALCHEMY_DATABASE_URI = sqlalchemy_url = 'postgresql://svven@localhost/svven'
 
-## Redis
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
-# REDIS_DB = 0
-
-## Queues
+## RQ (Redis Queue)
+RQ_REDIS_HOST = 'localhost'
+RQ_REDIS_PORT = 6379
+RQ_REDIS_DB = 0
 QUEUES = (POLLER_QUEUE, ) = ("poller", )
 
 ## Twitter # @SvvenDotCom

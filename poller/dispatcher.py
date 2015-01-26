@@ -14,5 +14,5 @@ def dispatch():
     "Polling timelines periodically."
     while True:
         queue.enqueue()
-        logger.debug('Sleeping')
+        logger.info('Sleeping')
         time.sleep(queue.FREQUENCY)

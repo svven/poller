@@ -1,6 +1,9 @@
 """
 Poller Twitter job.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from . import config, db
 
 from tweepy import Twitter, TweepError
@@ -115,7 +118,7 @@ class TimelineJob(object):
         if status: # new or existing
             self.statuses.append(status)
         self.result[result] += 1
-        print "%s: %s" % (result.capitalize(), 
+        logger.info(result.capitalize() + ": %s",
             status and unicode(status).encode('utf8') or \
             "<Twitter Tweet (%s): %s...>" % (tweet.id, tweet.text[:30].encode('utf8')))
 
@@ -124,6 +127,7 @@ class TimelineJob(object):
         Iterate the timeline and load relevant statuses.
         Calculate and update timeline stats when done.
         """
+        logger.debug("Start job")
         # assert self.timeline.enabled, 'Timeline disabled, can\'t do the job.'
         self.started_at = datetime.datetime.utcnow()
         try:
@@ -144,6 +148,8 @@ class TimelineJob(object):
                 self.failed = True
                 if sum(self.result.values()) == 0:
                     self.result = repr(e) # exception
+                logger.exception(e)
         session.commit() # outside
         self.ended_at = datetime.datetime.utcnow()
+        logger.debug("End job")
 

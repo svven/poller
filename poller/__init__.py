@@ -1,9 +1,7 @@
 """
 Poller initialization.
 """
-import config
-
-import database, redis
+import config, database, redis
 
 ## Database
 database.config.sqlalchemy_url = config.sqlalchemy_url

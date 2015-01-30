@@ -4,7 +4,7 @@ Poller initialization.
 import config, database, redis
 
 ## Database
-database.load_config(config)
+database.init(config)
 db = database.db
 
 ## Redis

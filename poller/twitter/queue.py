@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 from . import config, db, r
 
 from job import TimelineJob
+from database.news.models import Reader
 from database.twitter.models import User, State, Timeline
 
 import time, datetime

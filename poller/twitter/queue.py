@@ -48,6 +48,7 @@ def process(user_id):
 def enqueue(timelines=[]):
     "Enqueue timelines to process."
     now = datetime.datetime.utcnow()
+    logger.debug("Start enqueue")
     session = db.Session()
     try:
     	if not timelines:
@@ -74,3 +75,4 @@ def enqueue(timelines=[]):
         raise
     finally:
         session.close()
+        logger.debug("End enqueue")

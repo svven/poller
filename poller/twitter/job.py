@@ -9,7 +9,7 @@ from . import config, db
 from tweepy import Twitter, TweepError
 
 from database.db import IntegrityError
-from database.twitter.models import User, Token, Timeline, Status
+from database.models import *
 
 import datetime
 from operator import attrgetter
@@ -87,9 +87,9 @@ class TimelineJob(object):
         if not url: # plain status
             result = PLAIN_STATUS
             return status, result
-        user = session.query(User).filter_by(user_id=tweet.user.id).first()
+        user = session.query(TwitterUser).filter_by(user_id=tweet.user.id).first()
         if not user: # new
-            user = User(tweet.user)
+            user = TwitterUser(tweet.user)
             session.add(user)
             self.users.append(user)
         elif user.ignored:

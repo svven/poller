@@ -7,8 +7,7 @@ logger = logging.getLogger(__name__)
 from . import config, db, r
 
 from job import TimelineJob
-from database.news.models import Reader
-from database.twitter.models import User, State, Timeline
+from database.models import *
 
 import time, datetime
 from rq import Connection, Queue
@@ -23,7 +22,7 @@ def process(user_id):
     logger.debug("Start process")
     session = db.Session()
     failed = False # yet
-    user = session.query(User).filter_by(user_id=user_id).one()
+    user = session.query(TwitterUser).filter_by(user_id=user_id).one()
     timeline, token = (user.timeline, user.token)
     try:
         # assert timeline.state == State.BUSY # not necessarily

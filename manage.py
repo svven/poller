@@ -45,11 +45,26 @@ def load():
         config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET, config.TWITTER_ACCESS_TOKENS)
     t = Twitter(consumer_key, consumer_secret, access_tokens)
     user_ids = access_tokens.keys()
+    session = db.Session()
     for user in t.lookup_users(user_ids=user_ids):
         key, secret = access_tokens[user.id]
-        user = TwitterUser(user, key=key, secret=secret)
-        db.session.add(user)
-    db.session.commit()
+        tweeter = session.query(TwitterUser).filter_by(user_id=user.id).first()
+        if not tweeter:
+            tweeter = TwitterUser(user, key=key, secret=secret)
+            session.add(tweeter)
+    session.commit()
+    session.close()
+
+@manager.command
+def process(screen_name):
+    "Process timeline of specified user."
+    from poller.twitter import queue
+    from poller import db
+    from database.models import TwitterUser
+    session = db.Session()
+    tweeter = session.query(TwitterUser).filter_by(screen_name=screen_name).first()
+    if tweeter:
+        queue.process(tweeter.user_id)
 
 
 if __name__ == '__main__':

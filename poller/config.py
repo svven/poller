@@ -5,7 +5,7 @@ Config settings for poller app.
 ## SQLAlchemy
 ## http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
 # SQLALCHEMY_ECHO = sqlalchemy_echo = True
-SQLALCHEMY_DATABASE_URI = sqlalchemy_url = 'postgresql://svven@localhost/svven'
+SQLALCHEMY_DATABASE_URI = sqlalchemy_url = 'postgresql://svven@localhost/test'
 
 ## RQ (Redis Queue)
 RQ_REDIS_HOST = 'localhost'
@@ -41,7 +41,7 @@ loggers:
         level: WARNING
     poller:
         handlers: [console, sentry]
-        level: INFO
+        level: DEBUG
 handlers:
     console:
         level: DEBUG

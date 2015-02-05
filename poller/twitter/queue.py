@@ -50,12 +50,12 @@ def enqueue(timelines=[]):
     logger.debug("Start enqueue")
     session = db.Session()
     try:
-    	if not timelines:
-        	timelines = session.query(Timeline).\
-	            filter(Timeline.enabled == True, Timeline.next_check < now).\
-	            order_by(Timeline.next_check)
+        if not timelines:
+            timelines = session.query(Timeline).\
+                filter(Timeline.enabled == True, Timeline.next_check < now).\
+                order_by(Timeline.next_check)
         else:
-        	timelines = [session.merge(t) for t in timelines]
+            timelines = [session.merge(t) for t in timelines]
         with Connection(r):
             q = Queue(QUEUE)
             for timeline in timelines:

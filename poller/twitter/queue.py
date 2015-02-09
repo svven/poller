@@ -26,7 +26,7 @@ def process(user_id):
     failed = False # yet
     user = session.query(TwitterUser).filter_by(user_id=user_id).one()
     timeline, users, tokens = (
-        user.timeline, user.timeline or [user], [user.token or default_token]
+        user.timeline, [user], [user.token or default_token]
     )
     try:
         job = TimelineJob(timeline, users, tokens)

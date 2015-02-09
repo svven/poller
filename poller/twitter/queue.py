@@ -16,17 +16,20 @@ QUEUE = config.POLLER_QUEUE
 FREQUENCY = Timeline.MIN_FREQUENCY
 RESULT_TTL = 1 * 60 # 1 min
 
+DEFAULT_TOKEN = config.TWITTER_DEFAULT_TOKEN
+default_token = Token.query.filter_by(user_id=DEFAULT_TOKEN).one()
 
 def process(user_id):
-    "Process specified timeline."
+    "Process timeline of specified user."
     logger.debug("Start process")
     session = db.Session()
     failed = False # yet
     user = session.query(TwitterUser).filter_by(user_id=user_id).one()
-    timeline, token = (user.timeline, user.token)
+    timeline, users, tokens = (
+        user.timeline, user.timeline or [user], [user.token or default_token]
+    )
     try:
-        # assert timeline.state == State.BUSY # not necessarily
-        job = TimelineJob(timeline, [token]) # user_timeline
+        job = TimelineJob(timeline, users, tokens)
         job.do(session)
         failed = job.failed # may be True
         return job.result
@@ -34,12 +37,13 @@ def process(user_id):
         session.rollback()
         failed = True # obviously
         logger.warning("Fail: %s", 
-            unicode(timeline).encode('utf8'),
-            exc_info=True, extra={'data': {'id': timeline.id}})
+            unicode(timeline or user).encode('utf8'),
+            exc_info=True, extra={'data': {'id': user.user_id}})
         raise
     finally:
-        timeline = session.merge(timeline) # no need
-        timeline.state = failed and State.FAIL or State.DONE
+        if timeline:
+            timeline = session.merge(timeline) # no need
+            timeline.state = failed and State.FAIL or State.DONE
         session.commit()
         session.close()
         logger.debug("End process")

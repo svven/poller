@@ -23,20 +23,16 @@ CONSUMER_KEY, CONSUMER_SECRET = (
 class TimelineJob(object):
     "Polling job for a Twitter timeline."
 
-    def __init__(self, timeline, tokens):
+    def __init__(self, timeline, users, tokens):
         "Initialize the timeline model."
-        assert timeline and tokens and \
-            timeline.user_id in [t.user_id for t in tokens], \
-            'Bad or missing TimelineJob args.'
-
         self.timeline = timeline
+        self.users = users or [] # new
         self.tokens = tokens
 
         self.failed = False # yet
         self.started_at = None
         self.ended_at = None
 
-        self.users = [] # new
         self.statuses = [] # new or existing
         self.result = {
             NEW_STATUS: 0, EXISTING_STATUS: 0, PLAIN_STATUS: 0, SKIPPED_STATUS: 0
@@ -92,7 +88,10 @@ class TimelineJob(object):
             user = TwitterUser(tweet.user)
             session.add(user)
             self.users.append(user)
-        elif user.ignored:
+        else:
+            user.load(tweet.user)
+            user = session.merge(user) # just in case
+        if user.ignored:
             result = SKIPPED_STATUS
             return status, result
         status = session.query(Status).filter_by(status_id=tweet.id).first()
@@ -131,11 +130,12 @@ class TimelineJob(object):
         # assert self.timeline.enabled, 'Timeline disabled, can\'t do the job.'
         self.started_at = datetime.datetime.utcnow()
         try:
-            for tweet in self.twitter.home_timeline(
-                user_id=self.timeline.user_id, since_id=self.timeline.since_id, 
-                count=self.timeline.since_id is None and 300 or None): # home_timeline
-                self.save_status(session, tweet)
-            self.update_timeline(session) # for home_timeline
+            if self.timeline:
+                for tweet in self.twitter.home_timeline(
+                    user_id=self.timeline.user_id, since_id=self.timeline.since_id, 
+                    count=self.timeline.since_id is None and 300 or None): # home_timeline
+                    self.save_status(session, tweet)
+                self.update_timeline(session) # for home_timeline
             for user in set(self.users):
                 for tweet in self.twitter.user_timeline(
                     user_id=user.user_id, count=100): # user_timeline

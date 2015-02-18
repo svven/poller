@@ -14,17 +14,17 @@ from tweepy import Twitter
 
 
 @manager.command
-def enqueue(loop=False):
+def enqueue(burst=False):
     "Enqueue timelines to be processed."
     from poller.twitter import queue
     while True:
         queue.enqueue()
-        if not loop:
+        if burst:
             break
         time.sleep(queue.FREQUENCY)
 
 @manager.command
-def work():
+def work(burst=False):
     "Queue worker processing timelines."
     from poller import r
     with Connection(r):
@@ -34,7 +34,7 @@ def work():
             from rq.contrib.sentry import register_sentry
             client = Client(config.SENTRY_DSN)
             register_sentry(client, worker)
-        worker.work()
+        worker.work(burst)
 
 @manager.command
 def load():

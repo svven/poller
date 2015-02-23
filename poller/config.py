@@ -1,14 +1,16 @@
 """
 Config settings for poller app.
 """
+import os
 
 ## SQLAlchemy
 ## http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
 # SQLALCHEMY_ECHO = sqlalchemy_echo = True
-SQLALCHEMY_DATABASE_URI = sqlalchemy_url = 'postgresql://svven@localhost/svven'
+DATABASE_HOST = os.environ.get('DATABASE_HOST', 'localhost')
+SQLALCHEMY_DATABASE_URI = sqlalchemy_url = 'postgresql://svven@%s/svven' % DATABASE_HOST
 
 ## RQ (Redis Queue)
-RQ_REDIS_HOST = 'localhost'
+RQ_REDIS_HOST = os.environ.get('RQ_REDIS_HOST', 'localhost')
 RQ_REDIS_PORT = 6379
 RQ_REDIS_DB = 0
 QUEUES = (POLLER_QUEUE, ) = ("poller", )

@@ -15,6 +15,7 @@ from rq import Connection, Queue
 QUEUE = config.POLLER_QUEUE
 FREQUENCY = Timeline.MIN_FREQUENCY
 RESULT_TTL = 1 * 60 # 1 min
+TIMEOUT = 10 * 60 # 10 min
 
 DEFAULT_TOKEN = config.TWITTER_DEFAULT_TOKEN
 default_token = Token.query.filter_by(user_id=DEFAULT_TOKEN).one()
@@ -70,7 +71,7 @@ def enqueue(timelines=[]):
                 else:
                     user_id, list_id = (timeline.user_id, timeline.list_id)
                     job = q.enqueue_call(func=process, args=(user_id, list_id), 
-                        description=description, result_ttl=RESULT_TTL, timeout=300) # job_id=unicode(user_id), result_ttl=0
+                        description=description, result_ttl=RESULT_TTL, timeout=TIMEOUT) # job_id=unicode(user_id), result_ttl=0
                     timeline.state = State.BUSY
                     session.commit()
                     logger.info('Queued: %s', description)

@@ -19,15 +19,16 @@ RESULT_TTL = 1 * 60 # 1 min
 DEFAULT_TOKEN = config.TWITTER_DEFAULT_TOKEN
 default_token = Token.query.filter_by(user_id=DEFAULT_TOKEN).one()
 
-def process(user_id):
-    "Process timeline of specified user."
+def process(user_id, list_id):
+    "Process timeline of specified user or list."
     logger.debug("Start process")
     session = db.Session()
     failed = False # yet
+    timeline = session.query(Timeline).filter_by(user_id=user_id, 
+        list_id=list_id).one()
     user = session.query(TwitterUser).filter_by(user_id=user_id).one()
-    timeline, users, tokens = (
-        user.timeline, [user], [user.token or default_token]
-    )
+    users = [user]
+    tokens = [user.token or default_token]
     try:
         job = TimelineJob(timeline, users, tokens)
         job.do(session)
@@ -67,9 +68,9 @@ def enqueue(timelines=[]):
                 if timeline.state == State.BUSY: # warning
                     logger.info('Skipped: %s', description)
                 else:
-                    user_id = timeline.user_id
-                    job = q.enqueue_call(func=process, args=(user_id,), 
-                        description=description, result_ttl=RESULT_TTL) # job_id=unicode(user_id), result_ttl=0
+                    user_id, list_id = (timeline.user_id, timeline.list_id)
+                    job = q.enqueue_call(func=process, args=(user_id, list_id), 
+                        description=description, result_ttl=RESULT_TTL, timeout=300) # job_id=unicode(user_id), result_ttl=0
                     timeline.state = State.BUSY
                     session.commit()
                     logger.info('Queued: %s', description)

@@ -47,6 +47,24 @@ class TimelineJob(object):
         urls = hasattr(status, 'entities') and status.entities.get('urls')
         return urls and len(urls) and urls[0].get('expanded_url') or None
 
+    def get_tweets(self):
+        "Get Twitter API timeline method call."
+        user_id = self.timeline.user_id
+        list_id = self.timeline.list_id
+        since_id = self.timeline.since_id
+        count = self.timeline.since_id is None and 300 or None
+
+        if self.timeline.type == Timeline.Type.HOME:
+            return self.twitter.home_timeline(
+                user_id=user_id, since_id=since_id, count=count) # home_timeline
+        elif self.timeline.type == Timeline.Type.USER:
+            return self.twitter.user_timeline(
+                user_id=user_id, since_id=since_id, count=count) # user_timeline
+        elif self.timeline.type == Timeline.Type.LIST:
+            return self.twitter.list_timeline(
+                list_id=list_id, since_id=since_id, count=count)
+
+
     def update_timeline(self, session):
         "Update timeline stats after doing the job."
         now = datetime.datetime.utcnow()
@@ -131,11 +149,9 @@ class TimelineJob(object):
         self.started_at = datetime.datetime.utcnow()
         try:
             if self.timeline:
-                for tweet in self.twitter.home_timeline(
-                    user_id=self.timeline.user_id, since_id=self.timeline.since_id, 
-                    count=self.timeline.since_id is None and 300 or None): # home_timeline
+                for tweet in self.get_tweets():
                     self.save_status(session, tweet)
-                self.update_timeline(session) # for home_timeline
+                self.update_timeline(session)
             for user in set(self.users):
                 for tweet in self.twitter.user_timeline(
                     user_id=user.user_id, count=100): # user_timeline

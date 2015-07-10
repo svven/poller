@@ -60,7 +60,7 @@ def process(screen_name):
     "Process specified user timeline."
     from poller import db
     from poller.twitter.job import TimelineJob
-    from database.models import TwitterUser
+    from database.models import TwitterUser, Token
     session = db.Session()
     timeline = None
     users = session.query(TwitterUser).filter_by(screen_name=screen_name).all()

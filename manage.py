@@ -57,15 +57,24 @@ def load():
 
 @manager.command
 def process(screen_name):
-    "Process timeline of specified user."
-    from poller.twitter import queue
+    "Process specified user timeline."
     from poller import db
+    from poller.twitter.job import TimelineJob
     from database.models import TwitterUser
     session = db.Session()
-    tweeter = session.query(TwitterUser).filter_by(screen_name=screen_name).first()
-    if tweeter:
-        queue.process(tweeter.user_id)
-
+    timeline = None
+    users = session.query(TwitterUser).filter_by(screen_name=screen_name).all()
+    tokens = config.TWITTER_ACCESS_TOKENS
+    try:
+        job = TimelineJob(timeline, users, tokens)
+        job.do(session)
+        return job.result
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.commit()
+        session.close()
 
 if __name__ == '__main__':
     manager.main()

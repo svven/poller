@@ -64,7 +64,7 @@ def process(screen_name):
     session = db.Session()
     timeline = None
     users = session.query(TwitterUser).filter_by(screen_name=screen_name).all()
-    tokens = config.TWITTER_ACCESS_TOKENS
+    tokens = session.query(Token).filter_by(user_id=config.TWITTER_DEFAULT_TOKEN).all()
     try:
         job = TimelineJob(timeline, users, tokens)
         job.do(session)

@@ -38,8 +38,7 @@ class TimelineJob(object):
             NEW_STATUS: 0, EXISTING_STATUS: 0, PLAIN_STATUS: 0, SKIPPED_STATUS: 0
         }
 
-        access_tokens = \
-            {t.user_id: (t.key, t.secret) for t in tokens}
+        access_tokens = {t.user_id: (t.key, t.secret) for t in tokens}
         self.twitter = Twitter(CONSUMER_KEY, CONSUMER_SECRET, access_tokens)
 
     def get_url(self, status):

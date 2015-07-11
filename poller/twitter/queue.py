@@ -44,9 +44,12 @@ def process(user_id, list_id):
         raise
     finally:
         if timeline:
-            timeline = session.merge(timeline) # no need
-            timeline.state = failed and State.FAIL or State.DONE
-        session.commit()
+            try:
+                timeline = session.merge(timeline) # no need
+                timeline.state = failed and State.FAIL or State.DONE
+                session.commit()
+            except:
+                session.rollback()
         session.close()
         logger.debug("End process")
 

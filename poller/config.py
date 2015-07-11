@@ -59,7 +59,7 @@ handlers:
     papertrail:
         level: INFO
         class: logging.handlers.SysLogHandler
-        address: ('logs3.papertrailapp.com', 20728)
+        address: logs3.papertrailapp.com, 20728
         formatter: papertrail
 formatters:
     console:

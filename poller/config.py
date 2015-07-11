@@ -28,6 +28,8 @@ TWITTER_ACCESS_TOKENS = {
 ## Sentry
 SENTRY_DSN = 'https://a5087c7f1fc344cbbc37e71f846a184e:98b7703681d14154b4f14b827f6acb9f@app.getsentry.com/46868'
 
+## Papertrail
+
 ## Logging
 LOGGING = '''
 version: 1
@@ -54,10 +56,18 @@ handlers:
         level: INFO
         class: raven.handlers.logging.SentryHandler
         dsn: {dsn}
+    papertrail:
+        level: INFO
+        class: logging.handlers.SysLogHandler
+        address: ('logs3.papertrailapp.com', 20728)
+        formatter: papertrail
 formatters:
     console:
         format: '%(asctime)s %(message)s'
         # format: '[%(asctime)s][%(levelname)s] %(name)s %(filename)s:%(funcName)s:%(lineno)d | %(message)s'
+        datefmt: '%H:%M:%S'
+    papertrail:
+        format: '%(asctime)s %(message)s'
         datefmt: '%H:%M:%S'
 '''
 LOGGING = LOGGING.format(dsn=SENTRY_DSN)

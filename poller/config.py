@@ -1,7 +1,7 @@
 """
 Config settings for poller app.
 """
-import os
+import os, socket
 
 ## SQLAlchemy
 ## http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html
@@ -29,6 +29,9 @@ TWITTER_ACCESS_TOKENS = {
 SENTRY_DSN = 'https://a5087c7f1fc344cbbc37e71f846a184e:98b7703681d14154b4f14b827f6acb9f@app.getsentry.com/46868'
 
 ## Papertrail
+HOSTNAME = socket.gethostname()
+PAPERTRAIL_HOST = 'logs3.papertrailapp.com'
+PAPERTRAIL_PORT = '20728'
 
 ## Logging
 LOGGING = '''
@@ -45,7 +48,7 @@ loggers:
         handlers: [console]
         level: WARNING
     poller:
-        handlers: [console, sentry]
+        handlers: [console, papertrail]
         level: DEBUG
 handlers:
     console:
@@ -55,11 +58,11 @@ handlers:
     sentry:
         level: INFO
         class: raven.handlers.logging.SentryHandler
-        dsn: {dsn}
+        dsn: {sentry_dsn}
     papertrail:
         level: INFO
         class: logging.handlers.SysLogHandler
-        address: logs3.papertrailapp.com, 20728
+        address: [{papertrail_host}, {papertrail_port}]
         formatter: papertrail
 formatters:
     console:
@@ -67,7 +70,8 @@ formatters:
         # format: '[%(asctime)s][%(levelname)s] %(name)s %(filename)s:%(funcName)s:%(lineno)d | %(message)s'
         datefmt: '%H:%M:%S'
     papertrail:
-        format: '%(asctime)s %(message)s'
+        format: '%(asctime)s {hostname} %(process)d %(message)s'
         datefmt: '%H:%M:%S'
 '''
-LOGGING = LOGGING.format(dsn=SENTRY_DSN)
+LOGGING = LOGGING.format(sentry_dsn=SENTRY_DSN, hostname=HOSTNAME,
+    papertrail_host=PAPERTRAIL_HOST, papertrail_port=PAPERTRAIL_PORT)

@@ -70,7 +70,7 @@ formatters:
         # format: '[%(asctime)s][%(levelname)s] %(name)s %(filename)s:%(funcName)s:%(lineno)d | %(message)s'
         datefmt: '%H:%M:%S'
     papertrail:
-        format: '%(asctime)s {hostname}.%(process)d %(name)s %(levelname)s: %(message)s'
+        format: '%(name)s {hostname}.%(process)d %(levelname)s: %(message)s'
         datefmt: '%H:%M:%S'
 '''
 LOGGING = LOGGING.format(sentry_dsn=SENTRY_DSN, hostname=HOSTNAME,

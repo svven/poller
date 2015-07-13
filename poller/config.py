@@ -26,7 +26,7 @@ TWITTER_ACCESS_TOKENS = {
 }
 
 ## Sentry
-SENTRY_DSN = 'https://a5087c7f1fc344cbbc37e71f846a184e:98b7703681d14154b4f14b827f6acb9f@app.getsentry.com/46868'
+SENTRY_DSN = '' # 'https://a5087c7f1fc344cbbc37e71f846a184e:98b7703681d14154b4f14b827f6acb9f@app.getsentry.com/46868'
 
 ## Papertrail
 HOSTNAME = socket.gethostname()

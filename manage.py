@@ -56,6 +56,12 @@ def load():
     session.close()
 
 @manager.command
+def process(user_id, list_id):
+    "Process timeline of specified user or list."
+    from poller.twitter import queue
+    queue.process(user_id, list_id)
+
+@manager.command
 def process(screen_name):
     "Process specified user timeline."
     from poller import db

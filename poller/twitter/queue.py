@@ -34,13 +34,14 @@ def process(user_id, list_id):
         job = TimelineJob(timeline, users, tokens)
         job.do(session)
         failed = job.failed # may be True
+        logger.info("Proced %s: %s",
+            unicode(timeline or user).encode('utf8'), job.result)
         return job.result
-    except:
+    except Exception, e:
         session.rollback()
         failed = True # obviously
-        logger.warning("Fail: %s", 
-            unicode(timeline or user).encode('utf8'),
-            exc_info=True, extra={'data': {'id': user.user_id}})
+        logger.error("Failed %s: %s", 
+            unicode(timeline or user).encode('utf8'), repr(e))
         raise
     finally:
         if timeline:
@@ -76,7 +77,7 @@ def enqueue(timelines=[]):
                     description=description, result_ttl=RESULT_TTL, timeout=TIMEOUT) # job_id=unicode(user_id), result_ttl=0
                 timeline.state = State.BUSY
                 session.commit()
-                logger.info('Queued: %s', description)
+                logger.debug('Queued: %s', description)
     except:
         session.rollback()
         raise

@@ -134,7 +134,7 @@ class TimelineJob(object):
         if status: # new or existing
             self.statuses.append(status)
         self.result[result] += 1
-        logger.info(result.capitalize() + ": %s",
+        logger.debug(result.capitalize() + ": %s",
             status and unicode(status).encode('utf8') or \
             "<Twitter Tweet (%s): %s...>" % (tweet.id, tweet.text[:30].encode('utf8')))
 

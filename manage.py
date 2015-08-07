@@ -29,11 +29,6 @@ def work(burst=False):
     from poller import r
     with Connection(r):
         worker = Worker([Queue(config.POLLER_QUEUE)])
-        if config.SENTRY_DSN:
-            from raven import Client
-            from rq.contrib.sentry import register_sentry
-            client = Client(config.SENTRY_DSN)
-            register_sentry(client, worker)
         worker.work(burst)
 
 @manager.command

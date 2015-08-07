@@ -3,7 +3,6 @@ SQLAlchemy==0.9.8
 hiredis==0.1.5
 manage.py==0.2.10
 psycopg2==2.5.4
-raven==5.1.1
 redis==2.10.3
 rq==0.4.6 # git+https://github.com/ducu/rq.git@master#egg=rq
 git+ssh://git@bitbucket.org/svven/database.git@master#egg=svven-database # -e ../database

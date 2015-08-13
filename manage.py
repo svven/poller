@@ -67,8 +67,10 @@ def process(screen_name):
     if not users:
         users = [TwitterUser(user)]
     else:
-        for u in users:
-            u.load(user)
+        for tweeter in users:
+            tweeter.load(user)
+            if tweeter.reader and tweeter.reader.auth_user:
+                tweeter.reader.auth_user.load(user) # temp
     try:
         job = TimelineJob(timeline, users, tokens)
         job.do(session)

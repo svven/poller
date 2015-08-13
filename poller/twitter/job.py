@@ -108,6 +108,8 @@ class TimelineJob(object):
         else:
             user.load(tweet.user)
             user = session.merge(user) # just in case
+            if user.reader and user.reader.auth_user:
+                user.reader.auth_user.load(user) # temp
         if user.ignored:
             result = SKIPPED_STATUS
             return status, result

@@ -4,9 +4,10 @@ Poller Twitter job.
 import logging
 logger = logging.getLogger(__name__)
 
-from . import config, db
+from . import config
 
 from tweepy import Twitter, TweepError
+# from meepy import Twitter, TweepError
 
 from database.db import IntegrityError
 from database.models import *
@@ -164,7 +165,8 @@ class TimelineJob(object):
                 if sum(self.result.values()) == 0:
                     self.result = repr(e) # exception
                 logger.exception(e)
-        session.commit() # outside
-        self.ended_at = datetime.datetime.utcnow()
-        logger.debug("End job")
+        finally:
+            session.commit() # outside
+            self.ended_at = datetime.datetime.utcnow()
+            logger.debug("End job")
 

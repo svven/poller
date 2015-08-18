@@ -4,12 +4,12 @@ Poller Twitter queue.
 import logging
 logger = logging.getLogger(__name__)
 
-from . import config, db, r
+from . import config, r
 
 from job import TimelineJob
 from database.models import *
 
-import time, datetime
+import datetime
 from rq import Connection, Queue
 
 QUEUE = config.POLLER_QUEUE
@@ -23,9 +23,9 @@ default_token = Token.query.filter_by(user_id=DEFAULT_TOKEN).one()
 def process(user_id, list_id):
     "Process timeline of specified user or list."
     logger.debug("Start process")
-    session = db.Session()
+    session = db.session()
     failed = False # yet
-    timeline = session.query(Timeline).filter_by(user_id=user_id, 
+    timeline = session.query(Timeline).filter_by(user_id=user_id,
         list_id=list_id).one()
     user = session.query(TwitterUser).filter_by(user_id=user_id).one()
     users = [user]
@@ -57,8 +57,8 @@ def process(user_id, list_id):
 def enqueue(timelines=[]):
     "Enqueue timelines to process."
     now = datetime.datetime.utcnow()
-    logger.debug("Start enqueue")
-    session = db.Session()
+    logger.debug("Start enqueue...")
+    session = db.session()
     try:
         if not timelines:
             timelines = session.query(Timeline).\

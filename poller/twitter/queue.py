@@ -34,7 +34,8 @@ def process(user_id, list_id):
         job = TimelineJob(timeline, users, tokens)
         job.do(session)
         failed = job.failed # may be True
-        logger.info("Proced %s: %s",
+        log = failed and logger.warning or logger.info
+        log("Proced %s: %s",
             unicode(timeline or user).encode('utf8'), job.result)
         return job.result
     except Exception, e:

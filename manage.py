@@ -29,11 +29,6 @@ def work(burst=False):
     from poller import r
     with Connection(r):
         worker = Worker([Queue(config.POLLER_QUEUE)])
-        if config.SENTRY_DSN:
-            from raven import Client
-            from rq.contrib.sentry import register_sentry
-            client = Client(config.SENTRY_DSN)
-            register_sentry(client, worker)
         worker.work(burst)
 
 @manager.command
@@ -65,12 +60,17 @@ def process(screen_name):
     timeline = None
     users = session.query(TwitterUser).filter_by(screen_name=screen_name).all()
     tokens = session.query(Token).filter_by(user_id=config.TWITTER_DEFAULT_TOKEN).all()
+    consumer_key, consumer_secret, access_tokens = (
+        config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET, config.TWITTER_ACCESS_TOKENS)
+    t = Twitter(consumer_key, consumer_secret, access_tokens)
+    user = t.get_user(screen_name=screen_name)
     if not users:
-        consumer_key, consumer_secret, access_tokens = (
-            config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET, config.TWITTER_ACCESS_TOKENS)
-        t = Twitter(consumer_key, consumer_secret, access_tokens)
-        user = t.get_user(screen_name=screen_name)
         users = [TwitterUser(user)]
+    else:
+        for tweeter in users:
+            tweeter.load(user)
+            if tweeter.reader and tweeter.reader.auth_user:
+                tweeter.reader.auth_user.load(user) # temp
     try:
         job = TimelineJob(timeline, users, tokens)
         job.do(session)

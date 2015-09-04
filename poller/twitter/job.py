@@ -165,6 +165,7 @@ class TimelineJob(object):
                 if sum(self.result.values()) == 0:
                     self.result = repr(e) # exception
                 logger.exception(e)
+
         finally:
             session.commit() # outside
             self.ended_at = datetime.datetime.utcnow()

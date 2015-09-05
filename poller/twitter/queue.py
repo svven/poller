@@ -4,7 +4,7 @@ Poller Twitter queue.
 import logging
 logger = logging.getLogger(__name__)
 
-from . import config, r
+from . import config, db, r
 
 from job import TimelineJob
 from database.models import *

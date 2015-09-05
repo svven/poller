@@ -40,7 +40,7 @@ def load():
         config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET, config.TWITTER_ACCESS_TOKENS)
     t = Twitter(consumer_key, consumer_secret, access_tokens)
     user_ids = access_tokens.keys()
-    session = db.Session()
+    session = db.session()
     for user in t.lookup_users(user_ids=user_ids):
         key, secret = access_tokens[user.id]
         tweeter = session.query(TwitterUser).filter_by(user_id=user.id).first()
@@ -56,7 +56,7 @@ def process(screen_name):
     from poller import db
     from poller.twitter.job import TimelineJob
     from database.models import TwitterUser, Token
-    session = db.Session()
+    session = db.session()
     timeline = None
     users = session.query(TwitterUser).filter_by(screen_name=screen_name).all()
     tokens = session.query(Token).filter_by(user_id=config.TWITTER_DEFAULT_TOKEN).all()

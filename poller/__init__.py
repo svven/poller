@@ -1,6 +1,9 @@
 """
 Poller initialization.
 """
+import requests
+requests.packages.urllib3.disable_warnings()
+
 import config, database, redis
 
 ## Database

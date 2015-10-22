@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 from . import config
 
 from tweepy import Twitter, TweepError
-# from meepy import Twitter, TweepError
 
 from database.db import IntegrityError
 from database.models import *

@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from . import config, db, r
+from . import get_default_token
 
 from job import TimelineJob
 from database.models import *
@@ -17,19 +18,17 @@ FREQUENCY = Timeline.MIN_FREQUENCY
 RESULT_TTL = 1 * 60 # 1 min
 TIMEOUT = 10 * 60 # 10 min
 
-DEFAULT_TOKEN = config.TWITTER_DEFAULT_TOKEN
-default_token = Token.query.filter_by(user_id=DEFAULT_TOKEN).one()
-
 def process(user_id, list_id):
     "Process timeline of specified user or list."
     logger.debug("Start process")
     session = db.session()
     failed = False # yet
-    timeline = session.query(Timeline).filter_by(user_id=user_id,
-        list_id=list_id).one()
     user = session.query(TwitterUser).filter_by(user_id=user_id).one()
-    users = [user]
-    tokens = [user.token or default_token]
+    timeline, users, tokens = (
+        session.query(Timeline).filter_by(user_id=user_id, list_id=list_id).one(),
+        [user],
+        [user.token or get_default_token()]
+    )
     try:
         job = TimelineJob(timeline, users, tokens)
         job.do(session)

@@ -1,6 +1,8 @@
 """
 Poller manager.
 """
+import poller; poller.init()
+
 from poller import config
 import logging, logging.config, yaml
 logging.config.dictConfig(yaml.load(config.LOGGING))
@@ -56,10 +58,9 @@ def process(screen_name):
     from poller import db
     from poller.twitter.job import TimelineJob
     from database.models import TwitterUser, Token
+    
     session = db.session()
-    timeline = None
     users = session.query(TwitterUser).filter_by(screen_name=screen_name).all()
-    tokens = session.query(Token).filter_by(user_id=config.TWITTER_DEFAULT_TOKEN).all()
     consumer_key, consumer_secret, access_tokens = (
         config.TWITTER_CONSUMER_KEY, config.TWITTER_CONSUMER_SECRET, config.TWITTER_ACCESS_TOKENS)
     t = Twitter(consumer_key, consumer_secret, access_tokens)
@@ -72,7 +73,7 @@ def process(screen_name):
             if tweeter.reader and tweeter.reader.auth_user:
                 tweeter.reader.auth_user.load(user) # temp
     try:
-        job = TimelineJob(timeline, users, tokens)
+        job = TimelineJob(users=users, twitter=t)
         job.do(session)
         return job.result
     except:

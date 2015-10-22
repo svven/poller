@@ -4,7 +4,7 @@ Poller Twitter job.
 import logging
 logger = logging.getLogger(__name__)
 
-from . import config
+from . import config, get_default_token
 
 from tweepy import Twitter, TweepError
 
@@ -23,11 +23,17 @@ CONSUMER_KEY, CONSUMER_SECRET = (
 class TimelineJob(object):
     "Polling job for a Twitter timeline."
 
-    def __init__(self, timeline, users, tokens):
+    def __init__(self, timeline=None, users=[], tokens=[], twitter=None):
         "Initialize the timeline model."
+        assert bool(timeline) != bool(users) # xor
         self.timeline = timeline
         self.users = users or [] # new
-        self.tokens = tokens
+        self.tokens = tokens or [get_default_token()]
+        if twitter:
+            self.twitter = twitter
+        else:
+            access_tokens = {t.user_id: (t.key, t.secret) for t in self.tokens}
+            self.twitter = Twitter(CONSUMER_KEY, CONSUMER_SECRET, access_tokens)
 
         self.failed = False # yet
         self.started_at = None
@@ -37,9 +43,6 @@ class TimelineJob(object):
         self.result = {
             NEW_STATUS: 0, EXISTING_STATUS: 0, PLAIN_STATUS: 0, SKIPPED_STATUS: 0
         }
-
-        access_tokens = {t.user_id: (t.key, t.secret) for t in tokens}
-        self.twitter = Twitter(CONSUMER_KEY, CONSUMER_SECRET, access_tokens)
 
     def get_url(self, status):
         "Get first url from tweet if any."

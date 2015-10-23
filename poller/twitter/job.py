@@ -25,7 +25,6 @@ class TimelineJob(object):
 
     def __init__(self, timeline=None, users=[], tokens=[], twitter=None):
         "Initialize the timeline model."
-        assert bool(timeline) != bool(users) # xor
         self.timeline = timeline
         self.users = users or [] # new
         if twitter:

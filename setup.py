@@ -10,7 +10,7 @@ setup(
     author_email='ducu@svven.com',
     packages=find_packages(),
     url='https://bitbucket.org/svven/poller',
-    description='Background worker component for system data input',
+    description='Background worker component for system data input.', 
     install_requires=[
         'SQLAlchemy>=0.9.8',
         'rq>=0.4.6',

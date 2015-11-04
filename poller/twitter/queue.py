@@ -72,12 +72,13 @@ def enqueue(timelines=[]):
                 description = unicode(timeline).encode('utf8')
                 if timeline.state == State.BUSY: # warning
                     logger.warning('Skipped: %s', description)
+                    continue
                 user_id, list_id = (timeline.user_id, timeline.list_id)
                 job = q.enqueue_call(func=process, args=(user_id, list_id), 
                     description=description, result_ttl=RESULT_TTL, timeout=TIMEOUT) # job_id=unicode(user_id), result_ttl=0
                 timeline.state = State.BUSY
-                session.commit()
                 logger.debug('Queued: %s', description)
+        session.commit()
     except:
         session.rollback()
         raise

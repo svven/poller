@@ -71,7 +71,7 @@ def enqueue(timelines=[]):
             for timeline in timelines:
                 description = unicode(timeline).encode('utf8')
                 if timeline.state == State.BUSY: # warning
-                    logger.warning('Skipped: %s', description)
+                    logger.debug('Skipped: %s', description)
                     continue
                 user_id, list_id = (timeline.user_id, timeline.list_id)
                 job = q.enqueue_call(func=process, args=(user_id, list_id), 

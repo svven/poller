@@ -70,7 +70,8 @@ def enqueue(timelines=[]):
             q = Queue(QUEUE)
             for timeline in timelines:
                 description = unicode(timeline).encode('utf8')
-                if timeline.state == State.BUSY: # warning
+                if timeline.state == State.BUSY and \
+                    timeline.next_check + datetime.timedelta(seconds=Timeline.DEFAULT_FREQUENCY) > now: # warning
                     logger.debug('Skipped: %s', description)
                     continue
                 user_id, list_id = (timeline.user_id, timeline.list_id)

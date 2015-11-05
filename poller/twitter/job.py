@@ -165,10 +165,15 @@ class TimelineJob(object):
                 e.response.status_code < 400 or e.response.status_code >= 500):
                 pass # no problem
             else:
+                logger.exception(e)
                 self.failed = True
                 if sum(self.result.values()) == 0:
                     self.result = repr(e) # exception
-                logger.exception(e)
+            if e.wait and self.timeline:
+                now = datetime.datetime.utcnow()
+                timeline = session.merge(self.timeline) # just in case
+                timeline.next_check = now + \
+                    datetime.timedelta(seconds=e.wait + 5) # next_check
         session.commit() # outside
         self.ended_at = datetime.datetime.utcnow()
         logger.debug("End job")

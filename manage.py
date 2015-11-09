@@ -83,5 +83,18 @@ def process(screen_name):
         session.commit()
         session.close()
 
+@manager.command
+def disable(screen_name):
+    "Disable specified user timelines."
+    from poller import db
+    from database.models import TwitterUser
+    
+    session = db.session()
+    tweeter = session.query(TwitterUser).filter_by(screen_name=screen_name).one()
+    for timeline in tweeter.timelines:
+        timeline.enabled = False
+    session.commit()
+    session.close()
+
 if __name__ == '__main__':
     manager.main()
